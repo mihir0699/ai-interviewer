@@ -32,12 +32,10 @@ export function DocumentUploadForm({ onUploadComplete, isLoading }: DocumentUplo
         });
         setResumeFile(null);
         setResumeContent("");
-        event.target.value = ""; // Clear the input
+        event.target.value = ""; 
         return;
       }
-      // Allow only .txt, .md, .pdf for simplicity in this example.
-      // For .pdf, actual text extraction would require a library on the backend or a more complex client-side solution.
-      // Here, we'll primarily focus on text-based files.
+      
       if (!['text/plain', 'text/markdown', 'application/pdf'].includes(file.type)) {
         toast({
           title: "Invalid file type",
@@ -46,7 +44,7 @@ export function DocumentUploadForm({ onUploadComplete, isLoading }: DocumentUplo
         });
         setResumeFile(null);
         setResumeContent("");
-        event.target.value = ""; // Clear the input
+        event.target.value = ""; 
         return;
       }
 
@@ -55,16 +53,8 @@ export function DocumentUploadForm({ onUploadComplete, isLoading }: DocumentUplo
       reader.onload = async (e) => {
         const text = e.target?.result as string;
         if (file.type === 'application/pdf') {
-          // For actual PDF text extraction, you'd typically send the file to a backend
-          // or use a client-side library like pdf.js.
-          // For this example, we'll just put a placeholder and the filename.
-          // In a real app, this would be where you integrate more complex PDF parsing.
           setResumeContent(`PDF file uploaded: ${file.name}\n\n[PDF content would be extracted here in a full implementation]`);
-           toast({
-            title: "PDF Uploaded",
-            description: `${file.name} uploaded. PDF text extraction is a simplified placeholder.`,
-            variant: "default",
-          });
+          // No toast here, info will be shown below input
         } else {
           setResumeContent(text);
         }
@@ -105,7 +95,7 @@ export function DocumentUploadForm({ onUploadComplete, isLoading }: DocumentUplo
     else {
          toast({
         title: "Missing Resume",
-        description: "Please upload your resume.",
+        description: "Please upload or paste your resume.",
         variant: "destructive",
       });
     }
@@ -125,26 +115,35 @@ export function DocumentUploadForm({ onUploadComplete, isLoading }: DocumentUplo
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="resume-file" className="text-lg font-semibold">Your Resume</Label>
-            <Input
-              id="resume-file"
-              type="file"
-              onChange={handleFileChange}
-              accept=".txt,.md,.pdf" // Basic client-side filter
-              className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-              aria-label="Resume File Upload"
-            />
-            {resumeFile && (
-              <div className="mt-2 flex items-center text-sm text-muted-foreground">
-                <FileText className="h-4 w-4 mr-2" />
-                <span>{resumeFile.name} ({(resumeFile.size / 1024).toFixed(2)} KB)</span>
-              </div>
-            )}
-             {/* Optionally, show a preview or status of the resume content for non-PDFs */}
+            <Label htmlFor="actual-file-input" className="text-lg font-semibold">Your Resume</Label>
+            <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-2">
+              <Button asChild variant="outline" className="w-full sm:w-auto">
+                <Label htmlFor="actual-file-input" className="cursor-pointer flex items-center justify-center sm:justify-start">
+                  <UploadCloud className="mr-2 h-4 w-4" />
+                  <span>{resumeFile ? "Change File" : "Upload Resume"}</span>
+                </Label>
+              </Button>
+              <Input
+                id="actual-file-input"
+                type="file"
+                onChange={handleFileChange}
+                accept=".txt,.md,.pdf"
+                className="sr-only"
+                aria-label="Upload your resume file"
+              />
+              {resumeFile && (
+                <div className="flex items-center text-sm text-muted-foreground pt-2 sm:pt-0">
+                  <FileText className="h-4 w-4 mr-2 shrink-0" />
+                  <span className="truncate" title={resumeFile.name}>
+                    {resumeFile.name} ({(resumeFile.size / 1024).toFixed(2)} KB)
+                  </span>
+                </div>
+              )}
+            </div>
+
             {resumeContent && !resumeFile?.type.includes('pdf') && (
               <Textarea
                 id="resume-preview"
-                placeholder="Resume content will appear here..."
                 value={resumeContent}
                 readOnly
                 rows={5}
@@ -152,7 +151,18 @@ export function DocumentUploadForm({ onUploadComplete, isLoading }: DocumentUplo
                 aria-label="Resume Content Preview"
               />
             )}
+            {resumeFile?.type.includes('pdf') && resumeContent.includes('PDF file uploaded:') && (
+              <Card className="mt-2 bg-muted/30 border-border/70">
+                <CardContent className="p-3 text-sm text-muted-foreground space-y-1">
+                  <p className="font-medium text-foreground/90">{resumeContent.split('\n')[0]}</p>
+                  <p className="text-xs">
+                    Note: For PDF files, content extraction is a placeholder. In a real application, this requires robust server-side parsing or a dedicated client-side library.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </div>
+
           <div className="space-y-2">
             <Label htmlFor="jobDescription" className="text-lg font-semibold">Job Description</Label>
             <Textarea
